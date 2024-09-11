@@ -1,4 +1,3 @@
-```markdown
 # Catalyst Count Project Setup
 
 Welcome to the Django project! This README will guide you through setting up the project on your local machine, including creating a virtual environment, installing dependencies, and running the server. Let's get started!
