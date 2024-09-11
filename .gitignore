@@ -1,0 +1,8 @@
+.venv
+db.sqlite3
+dump.rdb
+*.ipynb
+*.pyc
+core/migrations/000*.py
+media/*.progress
+media/companies*.csv

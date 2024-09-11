@@ -1,0 +1,174 @@
+{% extends './base.html' %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Filter Companies</h2>
+
+                <form id="filter-form" class="form-group" method="get" onsubmit="filterCompanies(event)">
+                    {% csrf_token %}
+                    <div class="row">
+
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Name:</label>
+                            <input type="text" id="name" name="name" class="form-control" placeholder="Enter company name">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="domain" class="form-label">Domain:</label>
+                            <input type="text" id="domain" name="domain" class="form-control" placeholder="Enter domain">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="year_founded" class="form-label">Year Founded:</label>
+                            <input type="text" id="year_founded" name="year_founded" class="form-control" placeholder="Enter year founded">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="industry" class="form-label">Industry:</label>
+                            <input type="text" id="industry" name="industry" class="form-control" placeholder="Enter industry">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="size_range" class="form-label">Size Range:</label>
+                            <input type="text" id="size_range" name="size_range" class="form-control" placeholder="Enter size range">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="locality" class="form-label">Locality:</label>
+                            <input type="text" id="locality" name="locality" class="form-control" placeholder="Enter locality">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="country" class="form-label">Country:</label>
+                            <input type="text" id="country" name="country" class="form-control" placeholder="Enter country">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="linkedin_url" class="form-label">LinkedIn URL:</label>
+                            <input type="text" id="linkedin_url" name="linkedin_url" class="form-control" placeholder="Enter LinkedIn URL">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="employees_count_from" class="form-label">Employees Count From:</label>
+                            <input type="number" id="employees_count_from" name="employees_count_from" class="form-control" placeholder="Enter minimum employees count">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="employees_count_to" class="form-label">Employees Count To:</label>
+                            <input type="number" id="employees_count_to" name="employees_count_to" class="form-control" placeholder="Enter maximum employees count">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <button type="submit" class="btn btn-primary">Filter</button>
+                        </div>
+                    </div>
+                </form>
+
+
+                <div id="results-container">
+                    <h3 class="mt-4 mb-3">Results</h3>
+                    <p>Total Records: <span id="count" class="fw-bold">0</span></p>
+                    <div class="table-responsive">
+                        <table id="results-table" class="table table-striped table-bordered mt-3">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Domain</th>
+                                    <th>Year Founded</th>
+                                    <th>Industry</th>
+                                    <th>Size Range</th>
+                                    <th>Locality</th>
+                                    <th>Country</th>
+                                    <th>LinkedIn URL</th>
+                                    <th>Current Employee Estimate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                        </table>
+                    </div>
+
+
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination">
+                            <li class="page-item" id="previous-page">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                            </li>
+                            <li class="page-item" id="next-page">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let currentPage = 1; 
+
+    async function filterCompanies(event) {
+        event.preventDefault();
+
+        const form = document.getElementById('filter-form');
+        const formData = new FormData(form);
+        const queryParams = new URLSearchParams(formData).toString();
+        const response = await fetch(`/api/companies/?${queryParams}&page=${currentPage}`);
+        const data = await response.json();
+
+        const countElement = document.getElementById('count');
+        const tableBody = document.querySelector('#results-table tbody');
+
+        countElement.textContent = data.count;
+        tableBody.innerHTML = '';
+
+        data.results.forEach(company => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${company.name || ''}</td>
+                <td>${company.domain || ''}</td>
+                <td>${company.year_founded || ''}</td>
+                <td>${company.industry || ''}</td>
+                <td>${company.size_range || ''}</td>
+                <td>${company.locality || ''}</td>
+                <td>${company.country || ''}</td>
+                <td><a href="${company.linkedin_url || '#'}" target="_blank">${company.linkedin_url || ''}</a></td>
+                <td>${company.current_employee_estimate || ''}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+
+        updatePagination(data.previous, data.next);
+    }
+
+    function updatePagination(previousUrl, nextUrl) {
+        const prevPageLink = document.querySelector('#previous-page a');
+        const nextPageLink = document.querySelector('#next-page a');
+
+        if (previousUrl) {
+            prevPageLink.href = `#`;
+            prevPageLink.classList.remove('disabled');
+            prevPageLink.onclick = function() {
+                currentPage--;
+                filterCompanies(new Event('click'));
+            };
+        } else {
+            prevPageLink.href = '#';
+            prevPageLink.classList.add('disabled');
+            prevPageLink.onclick = null;
+        }
+
+        if (nextUrl) {
+            nextPageLink.href = `#`;
+            nextPageLink.classList.remove('disabled');
+            nextPageLink.onclick = function() {
+                currentPage++;
+                filterCompanies(new Event('click'));
+            };
+        } else {
+            nextPageLink.href = '#';
+            nextPageLink.classList.add('disabled');
+            nextPageLink.onclick = null;
+        }
+    }
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        filterCompanies(new Event('load'));
+    });
+</script>
+{% endblock %}

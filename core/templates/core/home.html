@@ -1,0 +1,12 @@
+{% extends './base.html' %}
+
+{% block content %}
+    <div class="jumbotron text-center">
+        {% if user.is_authenticated %}
+
+        <h1 class="display-4">Welcome to Catalyst Count</h1>
+        {% else %}
+            <p class="lead">You are not logged in. Please <a href="{% url 'account_login' %}">Login</a> to access the features.</p>
+        {% endif %}
+    </div>
+{% endblock %}

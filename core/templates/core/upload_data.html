@@ -1,0 +1,89 @@
+{% extends './base.html' %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-body">
+            <h2 class="card-title">Upload CSV</h2>
+            <form id="upload-form" method="POST" enctype="multipart/form-data" class="form-group">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </form>
+            
+            <div id="progress-container" class="mt-4" style="display:none;">
+                <h3>Processing Progress:</h3>
+                <div class="progress">
+                    <progress id="progress-bar" class="progress-bar" value="0" max="100"></progress>
+                </div>
+                <p id="progress-text">0%</p>
+            </div>
+
+            <div id="success-container" class="alert alert-success mt-4" style="display:none;">
+                <h3>Upload and Data Insertion Complete!</h3>
+            </div>
+
+            <div id="error-container" class="alert alert-danger mt-4" style="display:none;">
+                <h3>Upload completed, but an error occurred during data insertion.</h3>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.getElementById('upload-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const form = event.target;
+        const progressContainer = document.getElementById('progress-container');
+        const successContainer = document.getElementById('success-container');
+        const errorContainer = document.getElementById('error-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+
+        successContainer.style.display = 'none';
+        errorContainer.style.display = 'none';
+        progressContainer.style.display = 'block';
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', form.action, true);
+        xhr.setRequestHeader('X-CSRFToken', form.querySelector('input[name="csrfmiddlewaretoken"]').value);
+
+        xhr.upload.onprogress = function(event) {
+            if (event.lengthComputable) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                progressBar.value = percentComplete;
+                progressText.textContent = Math.round(percentComplete) + '%';
+            }
+        };
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                const response = JSON.parse(xhr.responseText);
+
+                if (response.done) {
+                    progressText.textContent = 'Upload and data insertion complete!';
+                    successContainer.style.display = 'block';
+                } else {
+                    progressText.textContent = 'Data insertion failed.';
+                    errorContainer.style.display = 'block';
+                }
+                progressContainer.style.display = 'none';
+
+                
+                form.reset();  
+                progressBar.value = 0;  
+                progressText.textContent = '0%'; 
+            } else {
+                progressText.textContent = 'An error occurred during the file upload.';
+                errorContainer.style.display = 'block';
+            }
+        };
+
+        xhr.onerror = function() {
+            progressText.textContent = 'An error occurred during the file upload.';
+            errorContainer.style.display = 'block';
+        };
+
+        const formData = new FormData(form);
+        xhr.send(formData);
+    });
+    </script>
+{% endblock %}
